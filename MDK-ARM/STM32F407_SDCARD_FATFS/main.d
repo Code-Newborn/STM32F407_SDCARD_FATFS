@@ -45,3 +45,4 @@ stm32f407_sdcard_fatfs\main.o: ../Core/Inc/sdio.h
 stm32f407_sdcard_fatfs\main.o: ../Core/Inc/usart.h
 stm32f407_sdcard_fatfs\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 stm32f407_sdcard_fatfs\main.o: ../Core/Inc/gpio.h
+stm32f407_sdcard_fatfs\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h

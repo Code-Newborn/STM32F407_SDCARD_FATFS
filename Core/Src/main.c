@@ -26,6 +26,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include <string.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,6 +61,11 @@ void SystemClock_Config( void );
 /* USER CODE BEGIN 0 */
 
 uint8_t count = 0;
+
+// FATFS   SDFatFS;        // File system object
+FIL     MyFile;         // File object
+FRESULT fres;           // FATFS function common result code
+char    buffer[ 100 ];  // Buffer for file operations
 
 /* USER CODE END 0 */
 
@@ -99,8 +106,79 @@ int main( void ) {
 
     if ( HAL_SD_ConfigWideBusOperation( &hsd, SDIO_BUS_WIDE_4B ) != HAL_OK ) {  // WARNING 先设置1-bit后切换4-bit
         // 设置失败，处理错误
-        printf( "设置失败，处理错误\n" );
+        printf( "切换SDIO_4-bit失败，处理错误\n" );
         Error_Handler();
+    }
+
+    uint32_t byteswritten;                                 /* File write counts */
+    uint32_t bytesread;                                    /* File read counts */
+    uint8_t  wtext[] = "This is STM32 working with FatFs"; /* File write buffer */
+    uint8_t  rtext[ 100 ];                                 /* File read buffers */
+    char     filename[] = "STM32cube.txt";
+    char     SensorBuff[ 100 ];
+    printf( "********* STM32CubeMX FatFs Example *********\r\n\r\n" );
+    retSD = f_mount( &SDFatFS, SDPath, 1 );
+    if ( retSD == FR_OK ) {
+        printf( "f_mount sucess!!! \r\n" );
+        if ( f_open( &SDFile, filename, FA_CREATE_ALWAYS | FA_WRITE ) == FR_OK ) {  // 创建文件并写入
+            printf( "f_open file sucess!!! \r\n" );
+            retSD = f_write( &SDFile, wtext, sizeof( wtext ), &byteswritten );  // 向文件写入数据
+            if ( retSD == FR_OK ) {
+                printf( "f_write file sucess!!! \r\n" );
+                printf( "f_write Data : %s\r\n", wtext );
+
+                // 关闭文件
+                retSD = f_close( &SDFile );
+                if ( retSD )
+                    printf( "f_close error!!! %d\r\n", retSD );
+                else
+                    printf( "f_close sucess!!! \r\n" );
+            }
+            else
+                printf( "f_write file error %d\r\n", retSD );
+        }
+        else
+            printf( "f_open file error\r\n" );
+    }
+    else
+        printf( "f_mount error : %d \r\n", retSD );
+
+    retSD = f_open( &SDFile, filename, FA_READ );
+    if ( retSD )
+        printf( "f_open file error : %d\r\n", retSD );
+    else
+        printf( "f_open file sucess!!! \r\n" );
+
+    retSD = f_read( &SDFile, rtext, sizeof( rtext ), ( UINT* )&bytesread );
+    if ( retSD )
+        printf( "f_read error!!! %d\r\n", retSD );
+    else {
+        printf( "f_read sucess!!! \r\n" );
+        printf( "f_read Data : %s\r\n", rtext );
+    }
+
+    // 关闭文件
+    retSD = f_close( &SDFile );
+    if ( retSD )
+        printf( "f_close error!!! %d\r\n", retSD );
+    else
+        printf( "f_close sucess!!! \r\n" );
+
+    // 读取数据量等于写入数据量
+    if ( bytesread == byteswritten )
+        printf( "FatFs is working well!!!\r\n" );
+
+    if ( f_open( &SDFile, ( const char* )"Sensor.csv", FA_CREATE_ALWAYS | FA_WRITE ) == FR_OK ) {
+        printf( "Sensor.csv was opened/created!!!\r\n" );
+        sprintf( SensorBuff, "Item,Temp,Humi,Light\r\n" );
+        f_write( &SDFile, SensorBuff, strlen( SensorBuff ), &byteswritten );
+
+        for ( int i = 0; i < 10; i++ ) {
+            sprintf( SensorBuff, "%d,%d,%d,%d\r\n", i + 1, i + 20, i + 30, i + 40 );
+            f_write( &SDFile, SensorBuff, strlen( SensorBuff ), &byteswritten );
+            f_sync( &SDFile );
+        }
+        f_close( &SDFile );
     }
 
     /* USER CODE END 2 */
@@ -108,7 +186,6 @@ int main( void ) {
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while ( 1 ) {
-
         if ( HAL_GPIO_ReadPin( KEY_GPIO_Port, KEY_Pin ) == GPIO_PIN_SET ) {
             HAL_Delay( 50 );
             if ( HAL_GPIO_ReadPin( KEY_GPIO_Port, KEY_Pin ) == GPIO_PIN_SET ) {
