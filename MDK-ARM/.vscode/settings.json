@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "*.m": "matlab",
+        "*.json": "json",
+        "*.dts.tmp": "dts",
+        "sdio.h": "c",
+        "usart.h": "c",
+        "xmemory": "c",
+        "xutility": "c"
+    }
+}
